@@ -1,60 +1,58 @@
 var z = require('zero-fill')
   , n = require('numbro')
+  , highest, lowest
 
 module.exports = function container (get, set, clear) {
   return {
     name: 'leota',
-    description: 'Attempts to buy low and sell high by tracking RSI high-water readings.',
+    description: 'Attempts to buy lower than last sold price and sell higher then last bought price',
 
     getOptions: function () {
       this.option('period', 'period length', String, '2m')
-      this.option('min_periods', 'min. number of history periods', Number, 52)
-      this.option('rsi_periods', 'number of RSI periods', 14)
-      this.option('oversold_rsi', 'buy when RSI reaches or drops below this value', Number, 30)
-      this.option('overbought_rsi', 'sell when RSI reaches or goes above this value', Number, 82)
-      this.option('rsi_recover', 'allow RSI to recover this many points before buying', Number, 3)
-      this.option('rsi_drop', 'allow RSI to fall this many points before selling', Number, 0)
-      this.option('rsi_divisor', 'sell when RSI reaches high-water reading divided by this value', Number, 2)
+      this.option('diff', 'diff size', String, '5')
+
     },
 
     calculate: function (s) {
-      get('lib.rsi')(s, 'rsi', s.options.rsi_periods)
+
     },
 
     onPeriod: function (s, cb) {
       if (s.in_preroll) return cb()
-      if (typeof s.period.rsi === 'number') {
-        if (s.trend !== 'oversold' && s.trend !== 'long' && s.period.rsi <= s.options.oversold_rsi) {
-          s.rsi_low = s.period.rsi
-          s.trend = 'oversold'
-        }
-        if (s.trend === 'oversold') {
-          s.rsi_low = Math.min(s.rsi_low, s.period.rsi)
-          if (s.period.rsi >= s.rsi_low + s.options.rsi_recover) {
-            s.trend = 'long'
-            s.signal = 'buy'
-            s.rsi_high = s.period.rsi
+
+      if(s.my_trades.length == 0) {
+        s.signal = 'buy'
+      } else {
+        var my_last_trade = s.my_trades[s.my_trades.length -1]
+        // Sell logic
+        if(highest == undefined) {
+          highest = s.period.high
+        } 
+        if(my_last_trade.type !== 'sell') {
+          if(s.period.high > highest) {
+            highest = s.period.high
           }
-        }
-        if (s.trend === 'long') {
-          s.rsi_high = Math.max(s.rsi_high, s.period.rsi)
-          if (s.period.rsi <= s.rsi_high / s.options.rsi_divisor) {
-            s.trend = 'short'
+          if(s.period.high < (highest - s.options.diff) && s.period.high > my_last_trade.price) {
+            lowest = s.period.high
             s.signal = 'sell'
           }
         }
-        if (s.trend === 'long' && s.period.rsi >= s.options.overbought_rsi) {
-          s.rsi_high = s.period.rsi
-          s.trend = 'overbought'
+        // Buy logic
+        if(lowest == undefined) {
+          lowest = s.period.low
+        } 
+        if(my_last_trade.type !== 'buy') {
+          if(s.period.low < lowest) {
+            lowest = s.period.low
+          }
+          if(s.period.low > (lowest + s.options.diff) && s.period.low < my_last_trade.price) {
+            highest = s.period.low
+            s.signal = 'buy'
+          }
         }
-        // if (s.trend === 'overbought') {
-        //   s.rsi_high = Math.max(s.rsi_high, s.period.rsi)
-        //   if (s.period.rsi <= s.rsi_high - s.options.rsi_drop) {
-        //     s.trend = 'short'
-        //     s.signal = 'sell'
-        //   }
-        // }
+
       }
+      
       cb()
     },
 
