@@ -29,42 +29,42 @@ module.exports = function container (get, set, clear) {
         // Sell logic
         if(my_last_trade.type !== 'sell') {
           if(highest == undefined) {
-            highest = s.period.high
+            highest = s.period.close
           } 
-          if(s.period.high > highest) {
-            highest = s.period.high
+          if(s.period.close > highest) {
+            highest = s.period.close
           }
           // Panic sell
-          if(typeof(s.options.panic) == 'number' && s.period.high < my_last_trade_price - s.options.panic) {
+          if(typeof(s.options.panic) == 'number' && s.period.close < my_last_trade_price - s.options.panic) {
             console.log('****************************************')
             console.log('PANIC SELL')
             console.log('****************************************')
             s.signal = 'sell'
           }
-          console.log('high: ', s.period.high, 'highest: ', highest, 'last_trade: ', my_last_trade_price, 'goal: ', (my_last_trade_price + s.options.margin))
-          if(s.period.high < highest && s.period.high > my_last_trade_price + s.options.margin) {
-            lowest = s.period.high
+          console.log('high: ', s.period.close, 'highest: ', highest, 'last_trade: ', my_last_trade_price, 'goal: ', (my_last_trade_price + s.options.margin))
+          if(s.period.close < highest && s.period.close > my_last_trade_price + s.options.margin) {
+            lowest = s.period.close
             s.signal = 'sell'
           }
         }
         // Buy logic
         if(my_last_trade.type !== 'buy') {
           if(lowest == undefined) {
-            lowest = s.period.low
+            lowest = s.period.close
           } 
-          if(s.period.low < lowest) {
-            lowest = s.period.low
+          if(s.period.close < lowest) {
+            lowest = s.period.close
           }
           // Panic buy
-          if(typeof(s.options.panic) == 'number' && s.period.low > my_last_trade_price + s.options.panic) {
+          if(typeof(s.options.panic) == 'number' && s.period.close > my_last_trade_price + s.options.panic) {
             console.log('****************************************')
             console.log('PANIC BUY')
             console.log('****************************************')
             s.signal = 'buy'
           }
-          console.log('low: ', s.period.low, 'lowest: ', lowest, 'last_trade: ', my_last_trade_price, 'goal: ', (my_last_trade_price - s.options.margin))
-          if(s.period.low > lowest && s.period.low < my_last_trade_price - s.options.margin) {
-            highest = s.period.low
+          console.log('low: ', s.period.close, 'lowest: ', lowest, 'last_trade: ', my_last_trade_price, 'goal: ', (my_last_trade_price - s.options.margin))
+          if(s.period.close > lowest && s.period.close < my_last_trade_price - s.options.margin) {
+            highest = s.period.close
             s.signal = 'buy'
           }
         }
