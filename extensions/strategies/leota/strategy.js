@@ -9,8 +9,9 @@ module.exports = function container (get, set, clear) {
 
     getOptions: function () {
       this.option('period', 'period length', String, '2m')
-      this.option('margin', 'buy/sell margin size', Number, 5)
-      this.option('panic', 'panic size', String, 'none')
+      this.option('margin', 'buy/sell when this margin profit is reached (currency amount)', Number, 5)
+      this.option('panic', 'panic buy/sell when quote is hihger/lower last trade price +/- this amount (currency amount)', String, 'none')
+      this.option('drop', 'start buy/sell if highest/lowest drops by this amount (currency amount)', Number, 0)
 
     },
 
@@ -42,7 +43,7 @@ module.exports = function container (get, set, clear) {
             s.signal = 'sell'
           }
           console.log('high: ', s.period.close, 'highest: ', highest, 'last_trade: ', my_last_trade_price, 'goal: ', (my_last_trade_price + s.options.margin))
-          if(s.period.close < highest && s.period.close > my_last_trade_price + s.options.margin) {
+          if(s.period.close < highest - s.options.drop && s.period.close > my_last_trade_price + s.options.margin) {
             lowest = s.period.close
             s.signal = 'sell'
           }
@@ -63,7 +64,7 @@ module.exports = function container (get, set, clear) {
             s.signal = 'buy'
           }
           console.log('low: ', s.period.close, 'lowest: ', lowest, 'last_trade: ', my_last_trade_price, 'goal: ', (my_last_trade_price - s.options.margin))
-          if(s.period.close > lowest && s.period.close < my_last_trade_price - s.options.margin) {
+          if(s.period.close > lowest + s.options.drop && s.period.close < my_last_trade_price - s.options.margin) {
             highest = s.period.close
             s.signal = 'buy'
           }
